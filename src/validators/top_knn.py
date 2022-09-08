@@ -14,18 +14,17 @@ class TopKNN(Validator):
 
     def __init__(self, dataloaders: dict, device: str = "cuda"):
 
-        self.dataloaders = dataloaders
+        self.index_loader, self.test_loader = dataloaders["index"], dataloaders["test"]
         self.device = device
 
     @torch.no_grad()
     def validate(self, model: Model):
 
-        index_dl, valid_dl = self.dataloaders["index"], self.dataloaders["valid"]
         index_list, label_list = [], []
 
         print("Doing bank...")
         # Here memory usage is fine
-        for images, labels in tqdm(index_dl):
+        for images, labels in tqdm(self.index_loader):
 
             images = images.to(self.device)
             labels = labels.to(self.device)
@@ -43,7 +42,7 @@ class TopKNN(Validator):
         correct, total = 0, 0
 
         print("Doing test...")
-        for images, labels in tqdm(valid_dl):
+        for images, labels in tqdm(self.valid_loader):
             
             images = images.to(self.device)
             labels = labels.to(self.device)

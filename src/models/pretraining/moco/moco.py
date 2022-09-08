@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torchvision import transforms
 from copy import deepcopy
-from typing import Callable
+from typing import Optional, Callable
 
 from ..pretrain_model import PretrainModel
 from .queue import Queue
@@ -13,9 +14,15 @@ class MoCo(PretrainModel):
 
     name = "moco"
 
-    def __init__(self, encoder: nn.Module, augment: Callable, queue_size: int, momentum: float, temperature: float):
+    def __init__(self, encoder: nn.Module, queue_size: int, momentum: float, temperature: float, augment: Optional[Callable] = None):
 
         super().__init__()
+
+        if augment is None:
+            augment = transforms.Compose([
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(p=0.5),
+            ])
 
         self.encoder = encoder
         self.momentum_encoder = deepcopy(encoder)

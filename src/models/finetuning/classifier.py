@@ -5,6 +5,8 @@ from .finetune_model import FinetuneModel
 
 class Classifier(FinetuneModel):
 
+    name = "classifier"
+
     def __init__(self, encoder: nn.Module, num_classes: int):
 
         super().__init__(encoder)

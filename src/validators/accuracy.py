@@ -7,9 +7,9 @@ class Accuracy(Validator):
 
     metric_str = "accuracy"
 
-    def __init__(self, valid_dl, device="cuda"):
+    def __init__(self, dataloaders, device="cuda"):
 
-        self.valid_dl = valid_dl
+        self.valid_loader = dataloaders["valid"]
         self.device = device
 
     @torch.no_grad()
@@ -17,7 +17,7 @@ class Accuracy(Validator):
 
         correct, total = 0, 0
 
-        for images, labels in self.valid_dl:
+        for images, labels in self.valid_loader:
 
             images = images.to(self.device)
             labels = labels.to(self.device)

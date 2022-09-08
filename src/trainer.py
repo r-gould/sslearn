@@ -20,7 +20,7 @@ class Trainer:
         self.scheduler = scheduler
         self.validator = validator
 
-    def train(self, model: Model, train_dl: DataLoader, epochs: int, save_freq: int = 5, valid_freq: int = 5, 
+    def train(self, model: Model, train_loader: DataLoader, epochs: int, save_freq: int = 10, valid_freq: int = 10, 
               save_path = "weights", device: str = "cuda"):
 
         """if validator is not None:
@@ -37,7 +37,7 @@ class Trainer:
         for epoch in range(1, epochs+1):
             print("Epoch:", epoch)
             epoch_losses = []
-            for images, labels in tqdm(train_dl):
+            for images, labels in tqdm(train_loader):
                 
                 images = images.to(device)
 
