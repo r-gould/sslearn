@@ -16,8 +16,8 @@ class SimCLR(PretrainModel):
 
     default_augment = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
-        transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-        color_distortion,
+        #transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+        color_distortion(),
         transforms.RandomHorizontalFlip(p=0.5),
     ])
 

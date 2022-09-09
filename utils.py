@@ -41,8 +41,14 @@ valid_dl = DataLoader(valid_ds, valid_bs, shuffle=False)"""
 batch_size = 16
 build_dataloader(CIFAR10, "static/datasets", None, batch_size, train=True, download=True)"""
 
-def load_cifar10(root: str, train: bool, batch_size: int, transform: Optional[Callable] = None, shuffle: bool = False, download: bool = True):
-
+def load_cifar10(
+    root: str,
+    train: bool,
+    batch_size: int,
+    transform: Optional[Callable] = None,
+    shuffle: bool = False,
+    download: bool = True
+):
     if transform is None:
         transform =  transforms.Compose([
             transforms.ToTensor(),
@@ -52,8 +58,14 @@ def load_cifar10(root: str, train: bool, batch_size: int, transform: Optional[Ca
     dataset = CIFAR10(root, train, transform, download=download)
     return DataLoader(dataset, batch_size, shuffle=shuffle)
 
-def plot_results(metrics: list, epochs: int, title: str, y_str: str, x_str: str = "Epochs", color="blue"):
-
+def plot_results(
+    metrics: list,
+    epochs: int,
+    title: str,
+    y_str: str,
+    x_str: str = "Epochs",
+    color="blue"
+):
     plt.title(title)
     plt.xlabel(x_str)
     plt.ylabel(y_str)

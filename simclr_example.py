@@ -19,7 +19,7 @@ from utils import load_cifar10, plot_results
 
 def pretrain(epochs: int, warmup_epochs: int, data_root: str, device: str = "cuda"):
 
-    (train_bs, valid_bs, index_bs) = (512, 1024, 1024)
+    (train_bs, valid_bs, index_bs) = (1024, 1024, 1024)
 
     dataloaders = {
         "train" : load_cifar10(data_root, train=True, batch_size=train_bs, shuffle=True),
@@ -30,7 +30,7 @@ def pretrain(epochs: int, warmup_epochs: int, data_root: str, device: str = "cud
     validator = TopKNN(dataloaders, device=device)
 
     encoder = ResNet(channels_in=3, model_name="resnet-18")
-    model = SimCLR(encoder, head_dim=encoder.encode_dim, temperature=0.1)
+    model = SimCLR(encoder, head_dim=128, temperature=0.1)
 
     #lr = 0.3 * (train_bs / 256)
     optim = torch.optim.Adam(model.parameters(), lr=3e-4, weight_decay=1e-6)
@@ -53,7 +53,7 @@ def finetune(encoder: nn.Module, epochs: int, data_root: str, load_path: Optiona
     if load_path:
         encoder.load_state_dict(torch.load(load_path))
 
-    (train_bs, valid_bs) = (512, 1024)
+    (train_bs, valid_bs) = (1024, 1024)
 
     dataloaders = {
         "train" : load_cifar10(data_root, train=True, batch_size=train_bs, shuffle=True),
@@ -80,8 +80,8 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data_root = "static/datasets"
 
-    pretrained_encoder = pretrain(epochs=10, data_root=data_root, device=device)
-    finetuned_encoder = finetune(pretrained_encoder, epochs=10, data_root=data_root, device=device)
+    pretrained_encoder = pretrain(epochs=100, warmup_epochs=10, data_root=data_root, device=device)
+    finetuned_encoder = finetune(pretrained_encoder, epochs=100, data_root=data_root, device=device)
 
     return finetuned_encoder
 

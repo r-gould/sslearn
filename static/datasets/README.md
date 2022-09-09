@@ -1,1 +1,1 @@
-Datasets should be downloaded/stored here
+Datasets can be stored here

@@ -116,10 +116,29 @@ import torch
 c = torch.randn(8, 3, 64, 64)
 print(b(c).shape)"""
 
-import torch
+"""import torch
 
 N = 16
 
 labels = torch.cat([torch.arange(N, 2*N), torch.arange(N)], dim=0)
 print(labels)
-print(labels.shape)
+print(labels.shape)"""
+import torch
+import torchvision
+from torchvision import transforms
+import numbers
+s: float = 1.0
+
+t = transforms.ColorJitter(0.8*s, 0.8*s, 0.8*s, 0.2*s)
+t_compose = transforms.Compose([
+    transforms.Resize(32),
+    transforms.Compose([
+        transforms.RandomApply([t], p=0.8),
+        transforms.RandomGrayscale(p=0.2),
+    ]),
+    transforms.Grayscale(),
+])
+#print(isinstance(0.8*1.0, numbers.Number))
+a = torch.randn(16, 3, 64, 64)
+b = t_compose(a)
+print(b.shape)

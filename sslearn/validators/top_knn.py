@@ -16,7 +16,7 @@ class TopKNN(Validator):
 
     def __init__(self, dataloaders: Dict[str, DataLoader], device: str = "cuda"):
 
-        self.index_loader, self.test_loader = dataloaders["index"], dataloaders["test"]
+        self.index_loader, self.valid_loader = dataloaders["index"], dataloaders["valid"]
         self.device = device
 
     @torch.no_grad()

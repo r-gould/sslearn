@@ -2,6 +2,8 @@ import torch
 import warnings
 import torch.nn as nn
 
+from typing import Optional, Tuple
+
 from .layers import Residual, Bottleneck
 
 class ResNet(nn.Module):
@@ -14,16 +16,22 @@ class ResNet(nn.Module):
     TYPES = ("regular", "bottleneck")
 
     RESNET_CONFIGS = {
-        "resnet-18" : ([2, 2, 2, 2], "regular"),
-        "resnet-34" : ([3, 4, 6, 3], "regular"),
-        "resnet-50" : ([3, 4, 6, 3], "bottleneck"),
-        "resnet-101" : ([3, 4, 23, 3], "bottleneck"),
-        "resnet-152" : ([3, 8, 36, 3], "bottleneck"),
+        "resnet-18" : ((2, 2, 2, 2), "regular"),
+        "resnet-34" : ((3, 4, 6, 3), "regular"),
+        "resnet-50" : ((3, 4, 6, 3), "bottleneck"),
+        "resnet-101" : ((3, 4, 23, 3), "bottleneck"),
+        "resnet-152" : ((3, 8, 36, 3), "bottleneck"),
     }
 
-    def __init__(self, channels_in, block_counts=None, res_type="regular", model_name=None,
-                 shortcut_type="projection", block_scaling=4):
-        
+    def __init__(
+        self,
+        channels_in: int,
+        block_counts: Optional[Tuple[int]] = None,
+        res_type: str = "regular",
+        model_name: Optional[str] = None,
+        shortcut_type: str = "projection",
+        block_scaling: int = 4,
+    ):
         super().__init__()
         
         if model_name:
@@ -33,23 +41,29 @@ class ResNet(nn.Module):
 
             block_counts, res_type = self.load_config(model_name)
         
-        assert res_type in self.TYPES, f"Provided 'res_type' is not one of {self.TYPES}."
+        assert res_type in self.TYPES, f"Provided res_type '{res_type}' is not one of {self.TYPES}."
 
         self.network, self.encode_dim = self._build_network(channels_in, block_counts, res_type, shortcut_type, block_scaling)
     
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # INPUT BE 229x229 IN PAPER TABLE 1 EXAMPLE
         return self.network(x)
 
-    def load_config(self, model_name):
+    def load_config(self, model_name: str) -> Tuple[Tuple[int], str]:
 
-        assert model_name in self.RESNET_CONFIGS.keys(), f"Provided 'model_name' is not one of {list(self.RESNET_CONFIGS.keys())}."
+        assert model_name in self.RESNET_CONFIGS.keys(), f"Provided model_name '{model_name}' is not one of {list(self.RESNET_CONFIGS.keys())}."
         
         return self.RESNET_CONFIGS.get(model_name)
 
     @classmethod
-    def _build_network(cls, channels_in, block_counts, res_type, shortcut_type, block_scaling):
-
+    def _build_network(
+        cls,
+        channels_in: int,
+        block_counts: Tuple[int],
+        res_type: str,
+        shortcut_type: str,
+        block_scaling: int,
+    ):
         assert len(block_counts) == 4
 
         layer_list = [
@@ -79,8 +93,13 @@ class ResNet(nn.Module):
         return nn.Sequential(*layer_list), c_in
 
     @staticmethod
-    def _build_layer(c_in, c_out, res_type, shortcut_type, block_scaling):
-
+    def _build_layer(
+        c_in: int,
+        c_out: int,
+        res_type: str,
+        shortcut_type: str,
+        block_scaling: int,
+    ):
         if res_type == "regular":
             return Residual(c_in, c_out, shortcut_type)
 
