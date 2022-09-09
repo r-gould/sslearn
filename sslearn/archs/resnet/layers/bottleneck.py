@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from .channel_pad import ChannelPad
 
-SHORTCUTS = ["projection", "padding"]
+SHORTCUTS = ("projection", "padding")
 
 class Bottleneck(nn.Module):
 

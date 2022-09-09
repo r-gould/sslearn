@@ -62,5 +62,5 @@ def plot_results(metrics: list, epochs: int, title: str, y_str: str, x_str: str 
     x = [i * freq for i in range(1, len(metrics)+1)]
 
     plt.plot(x, metrics, color=color)
-    plt.savefig(f"plots/{title.lower()}.png")
+    plt.savefig(f"static/plots/{title.lower()}.png")
     plt.show()

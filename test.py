@@ -90,11 +90,36 @@ b = torch.randint(0, 10, (5,))
 loss = loss_func(a, b)
 print(isinstance(loss, torch.Tensor))"""
 
-for a in range(5):
+"""for a in range(5):
     a = 2 * a
     b = 3*a
 
 print(a, b)
 del a, b
 print(a)
-print(b)
+print(b)"""
+
+"""from torchvision import transforms
+a = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.Resize(12),
+])
+
+print(type(a))
+b = transforms.Compose([
+    #transforms.Grayscale(),
+    a
+])
+
+import torch
+
+c = torch.randn(8, 3, 64, 64)
+print(b(c).shape)"""
+
+import torch
+
+N = 16
+
+labels = torch.cat([torch.arange(N, 2*N), torch.arange(N)], dim=0)
+print(labels)
+print(labels.shape)

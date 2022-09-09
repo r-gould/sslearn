@@ -10,9 +10,9 @@ class InfoNCE:
 
     def loss(self, query, key_pos, keys_neg):
 
-        # query: (batch_size, encode_dim)
-        # key_pos: (batch_size, encode_dim)
-        # keys_neg: (K, encode_dim)
+        # query: (batch_size, head_dim)
+        # key_pos: (batch_size, head_dim)
+        # keys_neg: (K, head_dim)
 
         # below should be (batch_size, 1)
         logits_pos = torch.bmm(
@@ -48,6 +48,6 @@ class InfoNCE:
 
         return -torch.log(numerator / denominator)"""
 
-    def __call__(self, query, key_pos, keys_neg):
+    def __call__(self, *args, **kwargs):
 
-        return self.loss(query, key_pos, keys_neg)
+        return self.loss(*args, **kwargs)

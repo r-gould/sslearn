@@ -2,6 +2,8 @@ import torch
 import torch.nn.functional as F
 
 from tqdm import tqdm
+from typing import Dict
+from torch.utils.data import DataLoader
 
 from ..models import Model
 from ..utils import cosine_similarity
@@ -12,7 +14,7 @@ class TopKNN(Validator):
 
     metric_str = "KNN accuracy"
 
-    def __init__(self, dataloaders: dict, device: str = "cuda"):
+    def __init__(self, dataloaders: Dict[str, DataLoader], device: str = "cuda"):
 
         self.index_loader, self.test_loader = dataloaders["index"], dataloaders["test"]
         self.device = device
@@ -28,7 +30,7 @@ class TopKNN(Validator):
 
             images = images.to(self.device)
             labels = labels.to(self.device)
-
+            # MAYBE CHANGE TO MODEL.FORWARD
             encodings = model.encode(images)
             #encodings = F.normalize(encodings, dim=-1)
             index_list.append(encodings)

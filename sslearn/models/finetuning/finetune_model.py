@@ -6,12 +6,13 @@ class FinetuneModel(Model):
 
     name = "finetune"
 
-    def __init__(self, encoder: nn.Module, *args, **kwargs):
+    def __init__(self, encoder: nn.Module, *args, freeze: bool = True, **kwargs):
 
         super().__init__()
 
         self.encoder = encoder
-        self._freeze()
+        if freeze:
+            self._freeze()
 
     def forward(self, x):
 

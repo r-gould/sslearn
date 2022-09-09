@@ -5,21 +5,18 @@ An example of MoCo applied to the CIFAR10 dataset.
 import torch
 import torch.nn as nn
 
-from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torchvision import transforms
-from torchvision.datasets import CIFAR10
 from typing import Optional
 
 #from src import archs, models, validators
-from src.archs import ResNet
-from src.models.pretraining import MoCo
-from src.models.finetuning import Classifier
-from src.validators import TopKNN, Accuracy
-from src import Trainer
+from ssl.archs import ResNet
+from ssl.models.pretraining import MoCo
+from ssl.models.finetuning import Classifier
+from ssl.validators import TopKNN, Accuracy
+from ssl import Trainer
 from utils import load_cifar10, plot_results
 
-def pretrain(epochs: int, data_root: str = "data", device: str = "cuda"):
+def pretrain(epochs: int, data_root: str, device: str = "cuda"):
 
     (train_bs, valid_bs, index_bs) = (512, 1024, 1024)
 
@@ -31,8 +28,8 @@ def pretrain(epochs: int, data_root: str = "data", device: str = "cuda"):
 
     validator = TopKNN(dataloaders, device=device)
 
-    encoder = ResNet(channels_in=3, encode_dim=128, model_name="resnet-18")
-    model = MoCo(encoder, queue_size=4096, momentum=0.99, temperature=0.1)
+    encoder = ResNet(channels_in=3, model_name="resnet-18")
+    model = MoCo(encoder, head_dim=128, queue_size=4096, momentum=0.99, temperature=0.1)
 
     optim = torch.optim.Adam(model.parameters(), lr=0.06, weight_decay=5e-4)
     scheduler = CosineAnnealingLR(optim, epochs * len(dataloaders["train"]))
@@ -45,7 +42,7 @@ def pretrain(epochs: int, data_root: str = "data", device: str = "cuda"):
 
     return model.encoder
 
-def finetune(encoder: nn.Module, epochs: int, data_root: str = "data", load_path: Optional[str] = None, device: str = "cuda"):
+def finetune(encoder: nn.Module, epochs: int, data_root: str, load_path: Optional[str] = None, device: str = "cuda"):
 
     if load_path:
         encoder.load_state_dict(torch.load(load_path))
@@ -75,9 +72,10 @@ def finetune(encoder: nn.Module, epochs: int, data_root: str = "data", load_path
 def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    data_root = "static/datasets"
 
-    pretrained_encoder = pretrain(epochs=10, device=device)
-    finetuned_encoder = finetune(pretrained_encoder, epochs=10, device=device)
+    pretrained_encoder = pretrain(epochs=10, data_root=data_root, device=device)
+    finetuned_encoder = finetune(pretrained_encoder, epochs=10, data_root=data_root, device=device)
 
     return finetuned_encoder
 

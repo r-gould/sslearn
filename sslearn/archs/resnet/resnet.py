@@ -2,10 +2,7 @@ import torch
 import warnings
 import torch.nn as nn
 
-from .utils.configs import RESNET_CONFIGS
-from .utils.layers import Residual, Bottleneck
-
-TYPES = ["regular", "bottleneck"]
+from .layers import Residual, Bottleneck
 
 class ResNet(nn.Module):
     """ResNet architecture.
@@ -14,12 +11,20 @@ class ResNet(nn.Module):
         block_counts (list/tuple): list of form []
     """
 
-    def __init__(self, channels_in, encode_dim, block_counts=None, res_type="regular", model_name=None,
+    TYPES = ("regular", "bottleneck")
+
+    RESNET_CONFIGS = {
+        "resnet-18" : ([2, 2, 2, 2], "regular"),
+        "resnet-34" : ([3, 4, 6, 3], "regular"),
+        "resnet-50" : ([3, 4, 6, 3], "bottleneck"),
+        "resnet-101" : ([3, 4, 23, 3], "bottleneck"),
+        "resnet-152" : ([3, 8, 36, 3], "bottleneck"),
+    }
+
+    def __init__(self, channels_in, block_counts=None, res_type="regular", model_name=None,
                  shortcut_type="projection", block_scaling=4):
         
         super().__init__()
-
-        self.encode_dim = encode_dim
         
         if model_name:
             if block_counts:
@@ -28,9 +33,9 @@ class ResNet(nn.Module):
 
             block_counts, res_type = self.load_config(model_name)
         
-        assert res_type in TYPES, f"Provided 'res_type' is not one of {TYPES}."
+        assert res_type in self.TYPES, f"Provided 'res_type' is not one of {self.TYPES}."
 
-        self.network = self._build_network(channels_in, encode_dim, block_counts, res_type, shortcut_type, block_scaling)
+        self.network, self.encode_dim = self._build_network(channels_in, block_counts, res_type, shortcut_type, block_scaling)
     
     def forward(self, x):
         # INPUT BE 229x229 IN PAPER TABLE 1 EXAMPLE
@@ -38,12 +43,12 @@ class ResNet(nn.Module):
 
     def load_config(self, model_name):
 
-        assert model_name in RESNET_CONFIGS.keys(), f"Provided 'model_name' is not one of {list(RESNET_CONFIGS.keys())}."
+        assert model_name in self.RESNET_CONFIGS.keys(), f"Provided 'model_name' is not one of {list(self.RESNET_CONFIGS.keys())}."
         
-        return RESNET_CONFIGS.get(model_name)
+        return self.RESNET_CONFIGS.get(model_name)
 
     @classmethod
-    def _build_network(cls, channels_in, encode_dim, block_counts, res_type, shortcut_type, block_scaling):
+    def _build_network(cls, channels_in, block_counts, res_type, shortcut_type, block_scaling):
 
         assert len(block_counts) == 4
 
@@ -68,10 +73,10 @@ class ResNet(nn.Module):
         layer_list.extend([
             nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             nn.Flatten(),
-            nn.Linear(c_in, encode_dim),
+            #nn.Linear(c_in, encode_dim),
         ]) 
 
-        return nn.Sequential(*layer_list)
+        return nn.Sequential(*layer_list), c_in
 
     @staticmethod
     def _build_layer(c_in, c_out, res_type, shortcut_type, block_scaling):

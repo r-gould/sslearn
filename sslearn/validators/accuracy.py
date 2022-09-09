@@ -1,5 +1,8 @@
 import torch
 
+from typing import Dict
+from torch.utils.data import DataLoader
+
 from ..models.finetuning import FinetuneModel
 from .validator import Validator
 
@@ -7,7 +10,7 @@ class Accuracy(Validator):
 
     metric_str = "accuracy"
 
-    def __init__(self, dataloaders, device="cuda"):
+    def __init__(self, dataloaders: Dict[str, DataLoader], device="cuda"):
 
         self.valid_loader = dataloaders["valid"]
         self.device = device
