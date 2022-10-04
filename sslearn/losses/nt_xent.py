@@ -10,18 +10,19 @@ class NTXent:
         self.cross_entropy = nn.CrossEntropyLoss()
 
     def loss(self, batch1, batch2, large=1e6):
-        
+
         assert batch1.shape == batch2.shape
 
         bs, _ = batch1.shape
         batch = torch.cat([batch1, batch2], dim=0) # (2bs, head_dim)
         batch = F.normalize(batch, dim=-1)
-        sims = batch @ batch.T # (2bs, 2bs)
+        sims = (batch @ batch.T) / self.temperature # (2bs, 2bs)
+        
         mask = torch.eye(2*bs).to(batch.device)
         sims = sims - large * mask
-        labels = torch.cat([torch.arange(bs, 2*bs), torch.arange(bs)], dim=0).to(batch.device)
+        labels = torch.cat([torch.arange(bs, 2*bs), torch.arange(0, bs)], dim=0).to(batch.device)
 
-        return self.cross_entropy(sims / self.temperature, labels)
+        return self.cross_entropy(sims, labels)
 
     def __call__(self, *args, **kwargs):
 

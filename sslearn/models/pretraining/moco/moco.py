@@ -6,17 +6,17 @@ from torchvision import transforms
 from copy import deepcopy
 from typing import Optional, Callable
 
-from ....losses.info_nce import InfoNCE
-from ..pretrain_model import PretrainModel
+from ....losses import InfoNCE
+from .. import _PretrainModel
 from .queue import Queue
 
-class MoCo(PretrainModel):
+class MoCo(_PretrainModel):
 
     name = "moco"
 
     default_augment = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
-        transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+        transforms.ColorJitter(0.4, 0.4, 0.4, 0.1),
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomGrayscale(p=0.2),
     ])
@@ -45,17 +45,13 @@ class MoCo(PretrainModel):
         else:
             raise ValueError(f"Provided version '{ver}' is not one of {self.VERS}.")
 
-        if augment is None:
-            augment = self.default_augment
-
         self.encoder = encoder
         self.momentum_encoder = deepcopy(encoder)
-        #self.head_dim = head_dim
-        self.augment = augment
-        #self.encode_dim = encoder.encode_dim
-        self.momentum = momentum
+        
+        self.augment = self._init_augment(augment)
 
-        self.queue = Queue(queue_size, self.encode_dim)
+        self.momentum = momentum
+        self.queue = Queue(queue_size, head_dim)
         self.loss_func = InfoNCE(temperature)
 
     def forward(self, x):
@@ -82,7 +78,7 @@ class MoCo(PretrainModel):
             key_pos = self.momentum_forward(x_key_pos) # of shape (batch_size, head_dim)
 
         query = F.normalize(query, dim=-1)
-        key_pos = F.normalize(key_pos, dim=-1)
+        key_pos = F.normalize(key_pos.detach(), dim=-1)
         
         keys_neg = self.queue.queue.to(x.device) # of shape (K, head_dim)
         self._save_for_update(key_pos)
@@ -96,6 +92,7 @@ class MoCo(PretrainModel):
         key_pos, = self._load_for_update()
         self.queue.enqueue_dequeue(key_pos)
 
+    @torch.no_grad()
     def _momentum_update(self):
 
         for (enc_param, mo_param) in zip(self.encoder.parameters(), 

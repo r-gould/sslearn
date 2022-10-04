@@ -3,9 +3,9 @@ import torch.nn as nn
 
 from typing import Optional
 
-from .finetune_model import FinetuneModel
+from .finetune_model import _FinetuneModel
 
-class Classifier(FinetuneModel):
+class Classifier(_FinetuneModel):
 
     name = "classifier"
 
@@ -14,7 +14,7 @@ class Classifier(FinetuneModel):
         encoder: nn.Module,
         num_classes: int,
         head: Optional[nn.Module] = None,
-        freeze: bool = True
+        freeze: bool = True,
     ):
         super().__init__(encoder, freeze)
         

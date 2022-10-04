@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from .channel_pad import ChannelPad
-from .norm import Norm
 
 class Residual(nn.Module):
 
@@ -13,7 +12,6 @@ class Residual(nn.Module):
         c_in: int,
         c_out: int,
         shortcut_type: str = "projection",
-        norm_type: str = "layer",
     ):
         super().__init__()
 
@@ -23,11 +21,11 @@ class Residual(nn.Module):
 
         self.pre_res = nn.Sequential(
             nn.Conv2d(c_in, c_out, kernel_size=(3, 3), stride=input_stride, padding=(1, 1)),
-            Norm(c_out, norm_type),
+            nn.BatchNorm2d(c_out),
             nn.ReLU(),
 
             nn.Conv2d(c_out, c_out, kernel_size=(3, 3), padding=(1, 1)),
-            Norm(c_out, norm_type),
+            nn.BatchNorm2d(c_out),
             nn.ReLU(),
         )
 
@@ -46,11 +44,3 @@ class Residual(nn.Module):
 
         out = self.pre_res(x)
         return out + self.shortcut(x)
-
-"""bs = 8
-c = 128
-h = 33
-w = h
-a = torch.randn(bs, c, h, w)
-res = Residual(c, 256, shortcut_type="padding")
-print(res(a).shape)"""

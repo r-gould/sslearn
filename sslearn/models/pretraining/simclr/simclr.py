@@ -4,43 +4,46 @@ import torch.nn as nn
 from typing import Optional, Callable
 from torchvision import transforms
 
-from ..pretrain_model import PretrainModel
-from ....losses.nt_xent import NTXent
+from .. import _PretrainModel
+from ....losses import NTXent
 from .color_distortion import color_distortion
 
-class SimCLR(PretrainModel):
+class SimCLR(_PretrainModel):
 
     name = "simclr"
 
-    # maybe try RandomResizedCrop(32, ...) instead?
-
     default_augment = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        #transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-        color_distortion(),
+        transforms.RandomResizedCrop(32),
         transforms.RandomHorizontalFlip(p=0.5),
+        color_distortion(0.5),
+        transforms.RandomApply([
+            transforms.GaussianBlur((32//10, 32//10), (0.1, 2)),
+        ], p=0.5),
     ])
 
     def __init__(
         self,
         encoder: nn.Module,
+        hidden_dim: int,
         head_dim: int,
         temperature: float,
-        augment: Optional[Callable] = None
+        augment: Optional[Callable] = None,
     ):
         super().__init__()
 
-        if augment is None:
-            augment = self.default_augment
-
         self.encoder = encoder
         self.head = nn.Sequential(
-            nn.Linear(encoder.encode_dim, encoder.encode_dim),
+            nn.Linear(encoder.encode_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(encoder.encode_dim, head_dim),
+            nn.Linear(hidden_dim, head_dim),
         )
-        self.augment = augment
+        
+        self.augment = self._init_augment(augment)
         self.loss_func = NTXent(temperature)
+
+    def encode(self, x):
+
+        return self.encoder(x)
 
     def forward(self, x):
 
@@ -50,6 +53,5 @@ class SimCLR(PretrainModel):
     def step(self, x: torch.Tensor):
 
         x_aug1, x_aug2 = self.augment(x), self.augment(x)
-        #encs1, encs2 = self.encoder(x_aug1), self.encoder(x_aug2)
         z1, z2 = self.forward(x_aug1), self.forward(x_aug2)
         return self.loss_func(z1, z2)

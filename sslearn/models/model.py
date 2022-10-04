@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 
-class Model(nn.Module):
+class _Model(nn.Module):
+    """
+    Abstract base class for models.
+    """
 
     name = "model"
 

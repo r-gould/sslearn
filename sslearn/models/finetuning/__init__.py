@@ -1,2 +1,2 @@
-from .finetune_model import FinetuneModel
+from .finetune_model import _FinetuneModel
 from .classifier import Classifier

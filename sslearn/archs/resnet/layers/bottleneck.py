@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from .channel_pad import ChannelPad
-from .norm import Norm
 
 class Bottleneck(nn.Module):
 
@@ -14,7 +13,6 @@ class Bottleneck(nn.Module):
         c_mid: int,
         c_out: int,
         shortcut_type: str = "projection",
-        norm_type: str = "layer",
     ):
         super().__init__()
 
@@ -24,15 +22,15 @@ class Bottleneck(nn.Module):
 
         self.pre_res = nn.Sequential(
             nn.Conv2d(c_in, c_mid, kernel_size=(1, 1), stride=input_stride),
-            Norm(c_mid, norm_type),
+            nn.BatchNorm2d(c_mid),
             nn.ReLU(),
 
             nn.Conv2d(c_mid, c_mid, kernel_size=(3, 3), padding=(1, 1)),
-            Norm(c_mid, norm_type),
+            nn.BatchNorm2d(c_mid),
             nn.ReLU(),
 
             nn.Conv2d(c_mid, c_out, kernel_size=(1, 1)),
-            Norm(c_out, norm_type),
+            nn.BatchNorm2d(c_out),
             nn.ReLU(),
         )
 
@@ -51,11 +49,3 @@ class Bottleneck(nn.Module):
 
         out = self.pre_res(x)
         return out + self.shortcut(x)
-
-"""bs = 8
-c = 256
-h = 32
-w = h
-a = torch.randn(bs, c, h, w)
-res = Bottleneck(c, 128, 512, shortcut_type="padding")
-print(res(a).shape)"""

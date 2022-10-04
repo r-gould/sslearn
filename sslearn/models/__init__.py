@@ -1,2 +1,2 @@
 from . import pretraining, finetuning
-from .model import Model
+from .model import _Model

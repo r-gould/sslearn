@@ -1,12 +1,15 @@
 import torch.nn as nn
 
-from ..model import Model
+from ..model import _Model
 
-class FinetuneModel(Model):
+class _FinetuneModel(_Model):
+    """
+    Abstract base class for finetuning models.
+    """
 
     name = "finetune"
 
-    def __init__(self, encoder: nn.Module, *args, freeze: bool = True, **kwargs):
+    def __init__(self, encoder: nn.Module, freeze: bool = True, *args, **kwargs):
 
         super().__init__()
 

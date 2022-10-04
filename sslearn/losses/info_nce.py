@@ -14,7 +14,7 @@ class InfoNCE:
         # key_pos: (batch_size, head_dim)
         # keys_neg: (K, head_dim)
 
-        # below should be (batch_size, 1)
+        # should be (batch_size, 1)
         logits_pos = torch.bmm(
             query.unsqueeze(1),
             key_pos.unsqueeze(2)
@@ -29,24 +29,7 @@ class InfoNCE:
 
         batch_size = len(query)
         labels = torch.zeros(batch_size).long().to(query.device)
-        #print(logits.dtype, labels.dtype)
         return self.cross_entropy(logits, labels)
-
-    """def loss(self, query, keys, pos_idx=0):
-
-        # query of shape (batch_size, encode_dim)
-        # keys of shape (batch_size, K+1, encode_dim)
-        query = query.unsqueeze(1)
-        keys = keys.transpose(1, 2)
-        dot_prods = torch.bmm(query, keys).squeeze() # of shape (batch_size, K+1)
-        
-        # of shape (batch_size,)
-        numerator = torch.exp(dot_prods[:, pos_idx] / self.temperature)
-         # of shape (batch_size,)
-        denominator = torch.sum(torch.exp(dot_prods / self.temperature), 
-                                dim=-1)
-
-        return -torch.log(numerator / denominator)"""
 
     def __call__(self, *args, **kwargs):
 
