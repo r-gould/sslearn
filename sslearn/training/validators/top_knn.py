@@ -24,31 +24,26 @@ class TopKNN(_Validator):
 
         index_list, label_list = [], []
 
-        print("Doing bank...")
-
-        for images, labels in tqdm(self.index_loader):
+        for images, labels in self.index_loader:
 
             images = images.to(self.device)
             labels = labels.to(self.device)
-            # MAYBE CHANGE TO MODEL.FORWARD
-            encodings = model.encode(images)
+            encodings = model.encoder(images)
 
             index_list.append(encodings)
             label_list.append(labels)
 
-        print("Done bank")
         index = torch.cat(index_list, dim=0) # (bank_size, encode_dim)
         index_labels = torch.cat(label_list, dim=0) # (bank_size,)
 
         correct, total = 0, 0
 
-        print("Doing test...")
-        for images, labels in tqdm(self.valid_loader):
+        for images, labels in self.valid_loader:
             
             images = images.to(self.device)
             labels = labels.to(self.device)
 
-            encodings = model.encode(images) # (batch_size, encode_dim)
+            encodings = model.encoder(images) # (batch_size, encode_dim)
 
             sims = cosine_similarity(encodings, index) # (batch_size, bank_size)
             top_idxs = torch.argmax(sims, dim=-1) # (batch_size,)
@@ -56,6 +51,5 @@ class TopKNN(_Validator):
 
             correct += torch.sum(pred_labels == labels).item()
             total += len(images)
-        print("Done test")
 
         return correct / total

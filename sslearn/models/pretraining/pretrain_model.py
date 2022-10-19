@@ -11,23 +11,21 @@ class _PretrainModel(_Model):
 
     name = "pretrain"
 
-    default_augment = None
+    DEFAULT_AUGMENT = transforms.Compose([])
 
-    def step(self, x):
+    def step(self, x: torch.Tensor) -> torch.Tensor:
 
         raise NotImplementedError()
 
     @classmethod
-    def _init_augment(cls, augment):
+    def _init_augment(cls, augment, batchwise: bool = True):
 
         if augment is None:
-            augment = cls.default_augment
+            augment = cls.DEFAULT_AUGMENT
 
-        return cls._batchwise_augment(augment)
-    
-    @staticmethod
-    def _batchwise_augment(augment):
-
-        return transforms.Lambda(
-            lambda batch: torch.stack([augment(x) for x in batch])
-        )
+        if batchwise:
+            return transforms.Lambda(
+                lambda batch: torch.stack([augment(x) for x in batch])
+            )
+        
+        return augment

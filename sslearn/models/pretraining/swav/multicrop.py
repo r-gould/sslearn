@@ -9,17 +9,21 @@ from ..simclr.color_distortion import color_distortion
 class MultiCrop:
 
     GLOBAL_SCALE = (0.4, 1)
-    LOCAL_SCALE = (0.05, 0.4)
+    LOCAL_SCALE = (0.1, 0.4)
 
-    def __init__(self, global_crop_info, local_crop_info, augment_batch: bool = True):
+    def __init__(self, global_crop_info, local_crop_info, batchwise: bool = True):
 
-        self.global_augments = self.create_augments(global_crop_info, self.GLOBAL_SCALE, augment_batch)
-        self.local_augments = self.create_augments(local_crop_info, self.LOCAL_SCALE, augment_batch)
+        self.global_augments = self.create_augments(global_crop_info, self.GLOBAL_SCALE, batchwise)
+        self.local_augments = self.create_augments(local_crop_info, self.LOCAL_SCALE, batchwise)
         
         self.augments = self.global_augments + self.local_augments
         self.crop_info = global_crop_info + local_crop_info
 
-    def crops(self, images):
+    def __call__(self, image):
+        
+        return self.crops(image)
+
+    def crops(self, image):
 
         crops = []
 
@@ -28,46 +32,32 @@ class MultiCrop:
             augment = self.augments[i]
 
             for _ in range(num_crops):
-                crops.append(augment(images))
+                crops.append(augment(image))
 
         return crops
 
     @staticmethod
-    def create_augments(crop_info, scale, augment_batch: bool = True):
-
+    def create_augments(crop_info, scale, batchwise):
+        
         augments = []
 
         for (_, size) in crop_info:
             augment = transforms.Compose([
                 transforms.RandomResizedCrop(size, scale=scale, interpolation=InterpolationMode.BICUBIC),
                 transforms.RandomHorizontalFlip(p=0.5),
-                color_distortion(),
+                color_distortion(s=0.5),
             ])
 
-            if augment_batch:
+            if batchwise:
                 augment_for_batch = transforms.Lambda(
                     lambda batch: torch.stack([augment(x) for x in batch])
                 )
                 augments.append(augment_for_batch)
-            else:
-                augments.append(augment)
+                continue
+                
+            augments.append(augment)
 
         return augments
-
-    @staticmethod
-    def crops_to_embeds(crops: list, network: nn.Module, output_dim: int, try_concat: bool):
-        
-        # Takes crops to their embeddings
-        # shape (len(crops)*batch_size, head_dim)
-
-        out = torch.zeros(0, output_dim).to(crops[0].device)
-
-        for crop in crops:
-
-            embed = network(crop)
-            out = torch.cat([out, embed], dim=0)
-
-        return out
         
 
     """@staticmethod

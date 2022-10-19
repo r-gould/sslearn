@@ -4,6 +4,7 @@ import torch.nn as nn
 from typing import Optional
 
 from .finetune_model import _FinetuneModel
+from ...archs import _Arch
 
 class Classifier(_FinetuneModel):
 
@@ -11,7 +12,8 @@ class Classifier(_FinetuneModel):
 
     def __init__(
         self,
-        encoder: nn.Module,
+        encoder: _Arch,
+        hidden_dim: int,
         num_classes: int,
         head: Optional[nn.Module] = None,
         freeze: bool = True,
@@ -20,24 +22,20 @@ class Classifier(_FinetuneModel):
         
         if head is None:
             head = nn.Sequential(
-                nn.Linear(encoder.encode_dim, encoder.encode_dim),
+                nn.Linear(encoder.encode_dim, hidden_dim),
                 nn.ReLU(),
-                nn.Linear(encoder.encode_dim, num_classes),
+                nn.Linear(hidden_dim, num_classes),
             )
 
         self.head = head
         self.loss_func = nn.CrossEntropyLoss()
 
-    def forward(self, images):
+    def forward(self, x):
 
-        encodings = self.encoder(images)
+        encodings = self.encoder(x)
         return self.head(encodings)
 
-    def encode(self, images):
+    def step(self, x: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 
-        return self.encoder(images)
-
-    def step(self, images, labels):
-
-        logits = self.forward(images)
-        return self.loss_func(logits, labels)
+        logits = self.forward(x)
+        return self.loss_func(logits, target)

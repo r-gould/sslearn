@@ -1,6 +1,8 @@
+import torch
 import torch.nn as nn
 
 from ..model import _Model
+from ...archs import _Arch
 
 class _FinetuneModel(_Model):
     """
@@ -9,11 +11,15 @@ class _FinetuneModel(_Model):
 
     name = "finetune"
 
-    def __init__(self, encoder: nn.Module, freeze: bool = True, *args, **kwargs):
+    def __init__(
+        self,
+        encoder: _Arch,
+        freeze: bool = True,
+        *args,
+        **kwargs
+    ):
+        super().__init__(encoder)
 
-        super().__init__()
-
-        self.encoder = encoder
         if freeze:
             self._freeze()
 
@@ -21,7 +27,7 @@ class _FinetuneModel(_Model):
 
         raise NotImplementedError()
 
-    def step(self, x, target):
+    def step(self, x: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 
         raise NotImplementedError()
 

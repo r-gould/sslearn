@@ -2,11 +2,12 @@ import torch
 import warnings
 import torch.nn as nn
 
+from .layers import Residual, Bottleneck
+from ..arch import _Arch
+
 from typing import Optional, Tuple
 
-from .layers import Residual, Bottleneck
-
-class ResNet(nn.Module):
+class ResNet(_Arch):
     """
     ResNet architecture.
     """
@@ -32,8 +33,6 @@ class ResNet(nn.Module):
         out_scaling: Optional[int] = None,
         cifar10: bool = False,
     ):
-        super().__init__()
-        
         if model_name:
             if block_counts:
                 warnings.warn("'block_counts' and 'model_name' have both been provided, "
@@ -49,8 +48,12 @@ class ResNet(nn.Module):
         if out_scaling is None:
             out_scaling = 1 if res_type == "regular" else 4
 
-        self.network, self.encode_dim = self._build_network(channels_in, block_counts, res_type, shortcut_type, block_scaling, out_scaling, cifar10)
-    
+        network, encode_dim = self._build_network(channels_in, block_counts, res_type, shortcut_type, block_scaling, out_scaling, cifar10)
+        
+        super().__init__(encode_dim)
+
+        self.network = network
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         return self.network(x)

@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, num_heads, encode_dim, val_dim, key_dim, masked=False):
+    def __init__(self, num_heads, encode_dim, val_dim, key_dim, dropout, masked=False):
         
         super().__init__()
 
@@ -17,6 +17,7 @@ class MultiHeadAttention(nn.Module):
         self.attention = ScaledDotProductAttention(key_dim, masked)
 
         self.output = nn.Linear(num_heads * val_dim, encode_dim)
+        self.drop = nn.Dropout(p=dropout)
 
     def forward(self, Q, K, V):
         
@@ -25,7 +26,8 @@ class MultiHeadAttention(nn.Module):
 
         attn = self.attention(*inp)
         out = self.concat(attn)
-        return self.output(out)
+        out = self.output(out)
+        return self.drop(out)
 
     def split(self, batch):
         # batch of shape (batch_size, seq_len, num_heads*d)

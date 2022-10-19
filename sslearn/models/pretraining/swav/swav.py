@@ -2,14 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from typing import Optional, Callable
-from torchvision import transforms
-
 from .sinkhorn import sinkhorn
 from .multicrop import MultiCrop
-from ..simclr.color_distortion import color_distortion
 from .. import _PretrainModel
 from ....losses import SwAVLoss
+from ....archs import _Arch
 
 class SwAV(_PretrainModel):
 
@@ -17,7 +14,7 @@ class SwAV(_PretrainModel):
 
     def __init__(
         self,
-        encoder: nn.Module,
+        encoder: _Arch,
         hidden_dim: int,
         head_dim: int,
         temperature: float,
@@ -26,9 +23,8 @@ class SwAV(_PretrainModel):
         global_crop_info: list,
         local_crop_info: list,
     ):
-        super().__init__()
+        super().__init__(encoder)
 
-        self.encoder = encoder
         self.head = nn.Sequential(
             nn.Linear(encoder.encode_dim, hidden_dim),
             nn.ReLU(),
@@ -53,45 +49,39 @@ class SwAV(_PretrainModel):
 
         encodings = self.encoder(x)
         return self.head(encodings)
+    
+    def step(self, x: torch.Tensor) -> torch.Tensor:
 
-    def step(self, x: torch.Tensor):
+        crops = self.multi_crop(x)
 
-        batch_size = x.shape[0]
-        crops = self.multi_crop.crops(x)
+        z = []
+        for crop in crops:
+            embed = self.forward(crop)
+            z.append(F.normalize(embed, dim=-1))
 
-        # (B*len(crops), head_dim)
-        z = MultiCrop.crops_to_embeds(crops, self, self.head_dim, try_concat=False)
-        z = F.normalize(z, dim=-1)
-
-        embeds = torch.zeros(0, self.head_dim)
-        codes = torch.zeros(0, self.num_prototypes, requires_grad=False)
-
+        loss = 0
         for i in range(self.global_count):
 
-            global_embed = z[i*batch_size : (i+1)*batch_size]
+            global_embed = z[i]
             global_code = sinkhorn(global_embed, self.prototypes)
             for j in range(len(crops)):
                 
                 if i == j:
                     continue
 
-                curr_embed = z[j*batch_size : (j+1)*batch_size]
-                #loss += self.loss_func(curr_embed, global_code, self.prototypes)
-                embeds = torch.cat([embeds, curr_embed], dim=0)
-                codes = torch.cat([codes, global_code], dim=0)
+                curr_embed = z[j]
+                loss += self.loss_func(curr_embed, global_code, self.prototypes)
 
-        return self.loss_func(embeds, codes, self.prototypes)
-
+        return loss
 
     def update(self):
 
         self.iters_done += 1
         if self.iters_done == self.freeze_iters:
-            print("PROTOTYPES FROZEN")
             self._freeze_prototypes()
         
         if self.iters_done <= self.freeze_iters:
-            self.prototypes = F.normalize(self.prototypes, dim=0)
+            self.prototypes.data = F.normalize(self.prototypes.data, dim=0)
 
     def _freeze_prototypes(self):
 
@@ -100,4 +90,5 @@ class SwAV(_PretrainModel):
     @staticmethod
     def _init_prototypes(head_dim, num_prototypes):
     
-        return torch.randn(head_dim, num_prototypes)
+        prototypes = torch.randn(head_dim, num_prototypes)
+        return F.normalize(prototypes, dim=0)

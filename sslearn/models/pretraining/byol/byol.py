@@ -10,25 +10,24 @@ from .head import BYOLHead
 from .. import _PretrainModel
 from ....losses import BYOLLoss
 from .. import SimCLR
+from ....archs import _Arch
 
 class BYOL(_PretrainModel):
 
     name = "byol"
 
-    default_augment = SimCLR.default_augment
+    DEFAULT_AUGMENT = SimCLR.DEFAULT_AUGMENT
 
     def __init__(
         self,
-        encoder: nn.Module,
+        encoder: _Arch,
         total_iters: int,
         hidden_dim: int,
         head_dim: int,
         decay_base: float,
         augment: Optional[Callable] = None,
     ):
-        super().__init__()
-
-        self.encoder = encoder
+        super().__init__(encoder)
 
         self.online_network = nn.Sequential(
             encoder,
@@ -48,11 +47,7 @@ class BYOL(_PretrainModel):
         self.total_iters = total_iters
         self.iters_done = 0
 
-    def encode(self, x):
-
-        return self.online_network(x)
-
-    def step(self, x: torch.Tensor):
+    def step(self, x: torch.Tensor) -> torch.Tensor:
 
         x_aug_a, x_aug_b = self.augment(x), self.augment(x)
         

@@ -8,23 +8,23 @@ from torchvision import transforms
 from .. import _PretrainModel
 from ....losses import BarlowLoss
 from .. import SimCLR
+from ....archs import _Arch
 
 class BarlowTwins(_PretrainModel):
 
     name = "barlowtwins"
 
-    default_augment = SimCLR.default_augment
+    #default_augment = SimCLR.default_augment
+    DEFAULT_AUGMENT = SimCLR.DEFAULT_AUGMENT
 
     def __init__(
         self,
-        encoder: nn.Module,
+        encoder: _Arch,
         project_dim: int,
         lambd: float,
         augment: Optional[Callable] = None,
     ):
-        super().__init__()
-
-        self.encoder = encoder
+        super().__init__(encoder)
 
         self.projector = nn.Sequential(
             nn.Linear(encoder.encode_dim, project_dim),
@@ -46,8 +46,8 @@ class BarlowTwins(_PretrainModel):
 
         encodings = self.encoder(x)
         return self.projector(encodings)
-
-    def step(self, x: torch.Tensor):
+        
+    def step(self, x: torch.Tensor) -> torch.Tensor:
 
         x_aug_a, x_aug_b = self.augment(x), self.augment(x)
         z_a, z_b = self.forward(x_aug_a), self.forward(x_aug_b)

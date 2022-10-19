@@ -15,13 +15,11 @@ class DINOLoss:
         """
         student: (batch_size, output_dim)
         """
-
-        teacher = teacher.detach()
         
-        student /= self.temp_s
+        student = student / self.temp_s
         teacher = (teacher - center) / self.temp_t
         
-        return self.cross_entropy(student, teacher)
+        return self.cross_entropy(student, F.softmax(teacher, dim=-1))
 
     def __call__(self, *args, **kwargs):
 

@@ -17,7 +17,7 @@ class Queue:
         if end_pointer <= self.size:
             self.queue[self.pointer:end_pointer] = batch
         else:
-            end_pointer -= self.size
+            end_pointer %= self.size
             diff = self.size - self.pointer
             self.queue[self.pointer:self.size] = batch[:diff]
             self.queue[:end_pointer] = batch[diff:]

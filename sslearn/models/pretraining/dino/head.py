@@ -25,7 +25,6 @@ class DINOHead(nn.Module):
             nn.LayerNorm(bottleneck_dim),
 
             #weight_norm(nn.Linear(bottleneck_dim, output_dim)),
-
             nn.Linear(bottleneck_dim, output_dim),
         )
 

@@ -25,7 +25,7 @@ class InfoNCE:
         # should be (batch_size, K+1)
         logits = torch.cat([logits_pos, logits_neg],
                            dim=-1)
-        logits /= self.temperature
+        logits = logits / self.temperature
 
         batch_size = len(query)
         labels = torch.zeros(batch_size).long().to(query.device)

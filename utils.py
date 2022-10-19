@@ -1,3 +1,4 @@
+import torch
 import matplotlib.pyplot as plt
 
 from torchvision.datasets import CIFAR10
@@ -11,7 +12,7 @@ def load_cifar10(
     batch_size: int,
     transform: Optional[Callable] = None,
     shuffle: bool = False,
-    download: bool = True
+    download: bool = True,
 ):
     if transform is None:
         transform =  transforms.Compose([

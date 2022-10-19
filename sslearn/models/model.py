@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from ..archs import _Arch
+
 class _Model(nn.Module):
     """
     Abstract base class for models.
@@ -8,15 +10,16 @@ class _Model(nn.Module):
 
     name = "model"
 
-    def __init__(self):
-
+    def __init__(
+        self,
+        encoder: _Arch, 
+        *args,
+        **kwargs
+    ):
         super().__init__()
-        
+
+        self.encoder = encoder
         self._update_cache = []
-
-    def encode(self, x):
-
-        raise NotImplementedError()
 
     def step(self, *args, **kwargs) -> torch.Tensor:
 

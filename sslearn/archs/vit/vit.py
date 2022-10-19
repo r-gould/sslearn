@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 
-from typing import Optional
+import time
 
 from .encoder import Encoder
+from ..arch import _Arch
 
-class ViT(nn.Module):
+from typing import Optional
+
+class ViT(_Arch):
 
     VIT_CONFIGS = {
         "vit-s" : (12, 6, 384, 1536),
@@ -26,15 +29,14 @@ class ViT(nn.Module):
         dropout: float = 0.0,
         channels: int = 3,
     ):
-        super().__init__()
-        
         if model_name:
             num_layers, num_heads, encode_dim, mlp_dim = self.load_config(model_name)
 
         if None in [num_layers, num_heads, encode_dim, mlp_dim]:
             raise ValueError("Either a valid 'model_name' or all arguments must be provided.")
 
-        self.encode_dim = encode_dim
+        super().__init__(encode_dim)
+
         self.embedding = self._init_embedding(encode_dim, channels, patch_shape)
         
         # (num_patches + 1, encode_dim)
@@ -98,6 +100,10 @@ class ViT(nn.Module):
 
         # shape (batch_size, num_patches, channels, patch_height, patch_width) if not flattened,
         # else (batch_size, num_patches, channels*patch_height*patch_width)
+        
+        
+        """print("ENTERED SPLIT_IMAGES")
+        start = time.time()"""
 
         patch_height, patch_width = patch_shape
 
@@ -124,6 +130,10 @@ class ViT(nn.Module):
         if flatten:
             out = torch.flatten(out, start_dim=2)
         
+        """end = time.time()
+        print("LEAVING SPLIT_IMAGES")
+        print("TIME:", end - start)"""
+        
         return out
 
     @staticmethod
@@ -144,9 +154,9 @@ class ViT(nn.Module):
         num_patches = (height // patch_height) * (width // patch_width)
 
         # + 1 is for class token
-        return torch.randn(num_patches + 1, encode_dim)
+        return 0.01 * torch.randn(num_patches + 1, encode_dim)
 
     @staticmethod
     def _init_class_token(encode_dim):
 
-        return torch.randn(encode_dim)
+        return 0.01 * torch.randn(encode_dim)

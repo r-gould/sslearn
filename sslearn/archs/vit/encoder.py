@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .layers import MultiHeadAttention, AddNorm, FeedForward
+from .layers import MultiHeadAttention, FeedForward
 
 class Encoder(nn.Module):
 
@@ -9,16 +9,18 @@ class Encoder(nn.Module):
 
         super().__init__()
 
-        self.attention = MultiHeadAttention(num_heads, encode_dim, val_dim, key_dim)
-        self.add_norm_a = AddNorm(encode_dim, dropout)
+        self.norm_a = nn.LayerNorm(encode_dim)
+        self.attention = MultiHeadAttention(num_heads, encode_dim, val_dim, key_dim, dropout)
 
-        self.feed_forward = FeedForward(encode_dim, mlp_dim)
-        self.add_norm_b = AddNorm(encode_dim, dropout)
+        self.norm_b = nn.LayerNorm(encode_dim)
+        self.feed_forward = FeedForward(encode_dim, mlp_dim, dropout)
 
     def forward(self, encoder_in):
         
-        attn = self.attention(encoder_in, encoder_in, encoder_in)
-        attn = self.add_norm_a(attn, encoder_in)
+        normed_in = self.norm_a(encoder_in)
+        attn = self.attention(normed_in, normed_in, normed_in)
+        attn += encoder_in
 
-        out = self.feed_forward(attn)
-        return self.add_norm_b(out, attn)
+        normed_attn = self.norm_b(attn)
+        out = self.feed_forward(normed_attn)
+        return out + attn

@@ -30,8 +30,8 @@ class Trainer:
         train_loader: DataLoader,
         epochs: int,
         save_path: str,
-        save_freq: int = 10,
-        valid_freq: int = 10, 
+        save_freq: int = 5,
+        valid_freq: int = 5,
         #save_path = "weights",
         device: str = "cuda"
     ):
@@ -42,15 +42,17 @@ class Trainer:
         for epoch in range(1, epochs+1):
             print("Epoch:", epoch)
             epoch_losses = []
-            for images, labels in tqdm(train_loader):
+            for x, target in tqdm(train_loader):
                 
-                images = images.to(device)
+                x = x.to(device)
 
                 if isinstance(model, _PretrainModel):
-                    loss = model.step(images)
+                    loss = model.step(x)
+
                 elif isinstance(model, _FinetuneModel):
-                    labels = labels.to(device)
-                    loss = model.step(images, labels)
+                    target = target.to(device)
+                    loss = model.step(x, target)
+
                 else:
                     raise TypeError(f"Model of type '{type(model)}' is not supported.")
 

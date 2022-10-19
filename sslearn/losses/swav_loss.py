@@ -17,15 +17,6 @@ class SwAVLoss:
         Q_s: (B, K)
         C: (encode_dim, K)
         """
-
-        """z_t, z_s = torch.chunk(z, 2, dim=0)
-        q_t, q_s = torch.chunk(q, 2, dim=0)
-        
-        term_1 = self.cross_entropy(z_t @ prototypes / self.temperature, q_s)
-
-        term_2 = self.cross_entropy(z_s @ prototypes / self.temperature, q_t)
-
-        return term_1 + term_2"""
         
         return self.cross_entropy(z @ prototypes / self.temperature, q)
 

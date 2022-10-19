@@ -9,23 +9,26 @@ from typing import Optional, Callable
 from ....losses import InfoNCE
 from .. import _PretrainModel
 from .queue import Queue
+from ....archs import _Arch
 
 class MoCo(_PretrainModel):
 
     name = "moco"
 
-    default_augment = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.ColorJitter(0.4, 0.4, 0.4, 0.1),
-        transforms.RandomHorizontalFlip(p=0.5),
+    DEFAULT_AUGMENT = transforms.Compose([
+        transforms.RandomResizedCrop(32, scale=(0.9, 1.1), ratio=(0.9, 1.1)),
         transforms.RandomGrayscale(p=0.2),
+        transforms.RandomApply([
+            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1),
+        ], p=0.8),
+        transforms.RandomHorizontalFlip(p=0.5),
     ])
 
     VERS = ("v1.0", "v2.0")
 
     def __init__(
         self,
-        encoder: nn.Module,
+        encoder: _Arch,
         head_dim: int,
         queue_size: int,
         momentum: float,
@@ -33,7 +36,7 @@ class MoCo(_PretrainModel):
         augment: Optional[Callable] = None,
         ver: str = "v2.0",
     ):
-        super().__init__()
+        super().__init__(encoder)
 
         if ver == "v1.0":
             self.head = nn.Linear(encoder.encode_dim, head_dim)
@@ -45,7 +48,6 @@ class MoCo(_PretrainModel):
         else:
             raise ValueError(f"Provided version '{ver}' is not one of {self.VERS}.")
 
-        self.encoder = encoder
         self.momentum_encoder = deepcopy(encoder)
         
         self.augment = self._init_augment(augment)
@@ -59,28 +61,23 @@ class MoCo(_PretrainModel):
         encodings = self.encoder(x)
         return self.head(encodings)
 
+    @torch.no_grad()
     def momentum_forward(self, x):
 
         encodings = self.momentum_encoder(x)
         return self.head(encodings)
 
-    def encode(self, x: torch.Tensor):
+    def step(self, x: torch.Tensor) -> torch.Tensor:
 
-        return self.encoder(x)
-
-    def step(self, x: torch.Tensor):
-        # x of shape (batch_size, *)
-        x_query = self.augment(x) # of shape (batch_size, *)
-        x_key_pos = self.augment(x) # of shape (batch_size, *)
+        x_query, x_key_pos = self.augment(x), self.augment(x)
 
         query = self.forward(x_query) # of shape (batch_size, head_dim)
-        with torch.no_grad():
-            key_pos = self.momentum_forward(x_key_pos) # of shape (batch_size, head_dim)
-
-        query = F.normalize(query, dim=-1)
-        key_pos = F.normalize(key_pos.detach(), dim=-1)
+        key_pos = self.momentum_forward(x_key_pos) # of shape (batch_size, head_dim)
         
-        keys_neg = self.queue.queue.to(x.device) # of shape (K, head_dim)
+        query = F.normalize(query, dim=-1)
+        key_pos = F.normalize(key_pos, dim=-1)
+        
+        keys_neg = self.queue.queue.to(x_query.device) # of shape (K, head_dim)
         self._save_for_update(key_pos)
 
         return self.loss_func(query, key_pos, keys_neg)
