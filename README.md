@@ -5,7 +5,7 @@ WORK IN PROGRESS
 Examples of usage can be found in folder `examples`.
 
 TODO:
-* Major refactors and features (model-specific data pipelines)
+* Major refactors
 * Optimizations
 
 Pretraining models:
