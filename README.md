@@ -1,12 +1,6 @@
 # sslearn
 
-WORK IN PROGRESS
-
 Examples of usage can be found in folder `examples`.
-
-TODO:
-* Major refactors
-* Optimizations
 
 Pretraining models:
 - [ ] Colorization
